@@ -1,0 +1,60 @@
+Olivia Houghton
+CS371 Programming Assignment 1
+README
+
+Instructions:
+Use the included makefile to compile and link the program. 
+ Please note: Multiple warnings will appear during compilation. These
+ errors are associated with the sample code provided to the class, and
+ that code has not been modified except in the case of the HandleTCPClient.cpp
+ file. The warnings are entirely expected.
+Execute using the standard ./myserver port directory
+
+Description:
+Largely uses the sample code for handling TCP communication. However, the file
+ HandleTCPClient.cpp is heavily modified to perform the functions of a web server
+ rather than echoing (the original behavior). 
+The server functions in the following way:
+ On GET: 
+  When a connection is established, a child process is created to handle it as usual. 
+  In handling it, the server reads data until a GET is read. 
+  The GET can be in any position, it need not be at the start of the (receiving) 
+  buffer and it may be cut off in the buffer. Once the GET is received, it is
+  assumed that the rest of the message is formatted as specified by the HTTP
+  protocol. Specifically: The message absolutely must end with crlfcrlf
+  for proper behavior, and the GET line must be properly formatted (spaces surrounding
+  URL, for instance). 
+ On the GET request line:
+  Once it has been established that a GET was received, work is done to find the end
+  of the request line. As per HTTP protocol, the request line should end with lf (\n). 
+  The line is gathered across multiple buffers if need be. 
+ On finding end of request:
+  After the line is gathered, the rest of the message is skipped until a lfcr is spotted. 
+  This is taken to indicate a crlfcrlf, which is assumed to be end of message. 
+ On sending data:
+  Once the end of request is found, the GET line is parsed for the url. If the url 
+  (when concatenated with the given directory) cannot be opened, a 404 message is
+  sent out. This is done by placing the full message in a string and then putting
+  as much of the string into the buffer as possible and sending (and repeating this
+  until there is none of the string left to send). 
+  If the file CAN be opened, then the file size is determined along with the content type,
+  and a "200" status and some headers are sent out similar to the 404 message. The file is
+  then looped over with fread() and send out in a similar manner. 
+  After either of those paths conclude, the socket is closed and the process exits. 
+
+
+Limitations:
+A buffer of size 2 is the absolute smallest that can be tolerated. Even then, it is best
+ to stick to a buffer of size 32 or more -- smaller sizes are untested. 
+The URL in a GET request absolutely must begin with a forward slash '/'
+Everything past a GET must be properly formatted. 
+The requested URL must have at least 4 characters if it is a file that exists (/ excepted)
+If the server has some file and it is requested, but it is not either html, gif, jpg or txt,
+ then the request will fail (no 404). 
+The server cannot handle files larger than 2 GB. 
+Google Chrome may display a "This webpage is not available" error message when requesting 
+ from the server. It is unknown why this happens, Firefox does not have this issue. Refreshing
+ corrects this. This problem does not arise when debugging with GDB. 
+Telnet also has strange behavior. The server may not respond to a GET request made through 
+ telnet at all, or not until some arbitrary number of characters is sent. This problem does
+ not arise when debugging with GDB. 
